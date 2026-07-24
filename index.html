@@ -242,7 +242,8 @@
         .list-en.hidden-en { color:var(--text-muted); cursor:pointer; font-style:italic; font-weight:normal; }
         .list-de { flex:1; text-align:right; min-width:120px; }
         .list-de.hidden-de { color:var(--text-muted); cursor:pointer; font-style:italic; font-weight:normal; }
-        .list-de.simple-de { flex:1; text-align:left; font-size:18px; font-weight:600; }
+        .list-en.simple-en { font-size:18px; font-weight:600; }
+        .list-de.simple-de { font-size:18px; font-weight:600; }
         .list-ex { flex-basis:100%; font-size:12px; color:var(--text-muted); font-style:italic; }
         .list-tags { flex-basis:100%; font-size:11px; color:var(--teal); }
         .list-speak { background:none; border:none; cursor:pointer; font-size:18px; color:var(--text-main); }
@@ -1761,6 +1762,22 @@
         return m ? m[1].toLowerCase() : "";
     }
 
+    // Fills a list-row field, wiring up tap-to-reveal when that side is hidden.
+    // htmlFn is called lazily (only once revealed) so it can be cheap either way.
+    function fillHideable(el, hiddenClass, isHidden, htmlFn) {
+        if (isHidden) {
+            let revealed = false;
+            const paint = () => {
+                el.classList.toggle(hiddenClass, !revealed);
+                el.innerHTML = revealed ? htmlFn() : "tap to reveal";
+            };
+            el.onclick = () => { revealed = !revealed; paint(); };
+            paint();
+        } else {
+            el.innerHTML = htmlFn();
+        }
+    }
+
     function renderWordList() {
         const body = document.getElementById("list-body");
         body.innerHTML = "";
@@ -1789,11 +1806,16 @@
             row.appendChild(numEl);
 
             if (simpleListMode) {
-                const deEl = document.createElement("span"); deEl.className = "list-de simple-de"; deEl.innerHTML = articleHTML(d.de);
+                const enEl = document.createElement("span"); enEl.className = "list-en simple-en";
+                fillHideable(enEl, "hidden-en", hideEnglish, () => escapeHTML(d.en));
+
+                const deEl = document.createElement("span"); deEl.className = "list-de simple-de";
+                fillHideable(deEl, "hidden-de", hideGerman, () => articleHTML(d.de));
+
                 const actions = document.createElement("span"); actions.className = "list-actions";
                 const spk = document.createElement("button"); spk.innerText = "🔊"; spk.title = "Listen"; spk.onclick = () => speakText(d.speak || d.de);
                 actions.appendChild(spk);
-                row.appendChild(deEl); row.appendChild(actions);
+                row.appendChild(enEl); row.appendChild(deEl); row.appendChild(actions);
                 row.title = "Right-click to change tags";
                 row.oncontextmenu = (ev) => { ev.preventDefault(); openTagPicker(e); };
                 body.appendChild(row);
@@ -1808,26 +1830,10 @@
             }
 
             const enEl = document.createElement("span"); enEl.className = "list-en";
-            if (hideEnglish) {
-                let revealedEn = false;
-                const paintEn = () => {
-                    enEl.classList.toggle("hidden-en", !revealedEn);
-                    enEl.innerText = revealedEn ? d.en : "tap to reveal";
-                };
-                enEl.onclick = () => { revealedEn = !revealedEn; paintEn(); };
-                paintEn();
-            } else { enEl.innerText = d.en; }
+            fillHideable(enEl, "hidden-en", hideEnglish, () => escapeHTML(d.en));
 
             const deEl = document.createElement("span"); deEl.className = "list-de";
-            if (hideGerman) {
-                let revealed = false;
-                const paintDe = () => {
-                    deEl.classList.toggle("hidden-de", !revealed);
-                    deEl.innerHTML = revealed ? articleHTML(d.de) : "tap to reveal";
-                };
-                deEl.onclick = () => { revealed = !revealed; paintDe(); };
-                paintDe();
-            } else { deEl.innerHTML = articleHTML(d.de); }
+            fillHideable(deEl, "hidden-de", hideGerman, () => articleHTML(d.de));
 
             const actions = document.createElement("span"); actions.className = "list-actions";
             const spk = document.createElement("button"); spk.innerText = "🔊"; spk.title = "Listen"; spk.onclick = () => speakText(d.speak || d.de);
@@ -1926,8 +1932,6 @@
     function toggleSimpleList() {
         simpleListMode = !simpleListMode;
         document.getElementById("simple-list-btn").classList.toggle("on", simpleListMode);
-        document.getElementById("hide-en-btn").style.display = simpleListMode ? "none" : "";
-        document.getElementById("hide-de-btn").style.display = simpleListMode ? "none" : "";
         document.getElementById("bulk-btn").style.display = simpleListMode ? "none" : "";
         if (simpleListMode && bulkMode) toggleBulk();
         renderWordList();
