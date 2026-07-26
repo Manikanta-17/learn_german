@@ -237,6 +237,7 @@
         .list-controls { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
         .list-row { display:flex; align-items:center; gap:10px; padding:12px 4px; border-bottom:1px solid var(--border-color); flex-wrap:wrap; }
         .list-row:last-child { border-bottom:none; }
+        .list-row.simple-row { -webkit-touch-callout:none; -webkit-user-select:none; user-select:none; }
         .list-num { color:var(--text-muted); font-size:12px; min-width:22px; }
         .list-en { flex:1; font-weight:bold; min-width:120px; }
         .list-en.hidden-en { color:var(--text-muted); cursor:pointer; font-style:italic; font-weight:normal; }
@@ -1778,6 +1779,30 @@
         }
     }
 
+    // Fires onFire after a touch is held on el without moving — the mobile equivalent
+    // of a right-click, since touch devices have no contextmenu event.
+    function wireLongPress(el, onFire) {
+        const LP_MS = 500, MOVE_TOLERANCE = 10;
+        let timer = null, startX = 0, startY = 0;
+        const cancel = () => { if (timer) { clearTimeout(timer); timer = null; } };
+        el.addEventListener("touchstart", (ev) => {
+            if (ev.touches.length !== 1) { cancel(); return; }
+            startX = ev.touches[0].clientX; startY = ev.touches[0].clientY;
+            timer = setTimeout(() => {
+                timer = null;
+                if (navigator.vibrate) navigator.vibrate(15);
+                onFire();
+            }, LP_MS);
+        }, { passive: true });
+        el.addEventListener("touchmove", (ev) => {
+            if (!timer) return;
+            const dx = ev.touches[0].clientX - startX, dy = ev.touches[0].clientY - startY;
+            if (Math.abs(dx) > MOVE_TOLERANCE || Math.abs(dy) > MOVE_TOLERANCE) cancel();
+        }, { passive: true });
+        el.addEventListener("touchend", cancel);
+        el.addEventListener("touchcancel", cancel);
+    }
+
     function renderWordList() {
         const body = document.getElementById("list-body");
         body.innerHTML = "";
@@ -1806,6 +1831,7 @@
             row.appendChild(numEl);
 
             if (simpleListMode) {
+                row.classList.add("simple-row");
                 const enEl = document.createElement("span"); enEl.className = "list-en simple-en";
                 fillHideable(enEl, "hidden-en", hideEnglish, () => escapeHTML(d.en));
 
@@ -1816,8 +1842,9 @@
                 const spk = document.createElement("button"); spk.innerText = "🔊"; spk.title = "Listen"; spk.onclick = () => speakText(d.speak || d.de);
                 actions.appendChild(spk);
                 row.appendChild(enEl); row.appendChild(deEl); row.appendChild(actions);
-                row.title = "Right-click to change tags";
+                row.title = "Right-click or long-press to change tags";
                 row.oncontextmenu = (ev) => { ev.preventDefault(); openTagPicker(e); };
+                wireLongPress(row, () => openTagPicker(e));
                 body.appendChild(row);
                 return;
             }
