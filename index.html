@@ -1842,8 +1842,9 @@
                 const spk = document.createElement("button"); spk.innerText = "🔊"; spk.title = "Listen"; spk.onclick = () => speakText(d.speak || d.de);
                 actions.appendChild(spk);
                 row.appendChild(enEl); row.appendChild(deEl); row.appendChild(actions);
-                row.title = "Right-click or long-press to change tags";
+                row.title = "Right-click, double-click, or long-press to change tags";
                 row.oncontextmenu = (ev) => { ev.preventDefault(); openTagPicker(e); };
+                row.ondblclick = (ev) => { ev.preventDefault(); openTagPicker(e); };
                 wireLongPress(row, () => openTagPicker(e));
                 body.appendChild(row);
                 return;
