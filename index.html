@@ -375,35 +375,29 @@
             <div class="card-container" onclick="flipVerbCard('main')" style="height:160px;">
                 <div class="card" id="verb-card-main">
                     <div class="card-face card-front"><span class="small-lbl">English verb</span><span id="v-en-main"></span></div>
-                    <div class="card-face card-back" style="background-color:var(--accent);"><span class="small-lbl">Infinitive</span><span id="v-de-main"></span></div>
+                    <div class="card-face card-back" style="background-color:var(--accent);"><span class="small-lbl">Infinitiv</span><span id="v-de-main"></span></div>
                 </div>
             </div>
             <div class="sub-cards-row">
-                <div class="sub-card-container" onclick="flipVerbCard('pres')">
-                    <div class="card" id="verb-card-pres">
-                        <div class="card-face card-front">Present</div>
-                        <div class="card-face card-back" id="v-de-pres"></div>
-                    </div>
-                </div>
                 <div class="sub-card-container" onclick="flipVerbCard('past')">
                     <div class="card" id="verb-card-past">
-                        <div class="card-face card-front">Past</div>
+                        <div class="card-face card-front">Präteritum</div>
                         <div class="card-face card-back" id="v-de-past"></div>
                     </div>
                 </div>
                 <div class="sub-card-container" onclick="flipVerbCard('fut')">
                     <div class="card" id="verb-card-fut">
-                        <div class="card-face card-front">Perfect</div>
+                        <div class="card-face card-front">Perfekt</div>
                         <div class="card-face card-back" id="v-de-fut"></div>
                     </div>
                 </div>
             </div>
-            <div class="verb-extra-block" id="verb-prep-block" style="display:none;" onclick="toggleVerbExtra('prep')">
-                <div class="small-lbl">Preposition &amp; case</div>
-                <div class="verb-extra-text hidden-field" id="v-prep-text">tap to reveal</div>
+            <div class="verb-extra-block" id="verb-pres-block" onclick="toggleVerbExtra('pres')">
+                <div class="small-lbl">Präsens — full conjugation</div>
+                <div class="verb-extra-text hidden-field" id="v-pres-text">tap to reveal</div>
             </div>
             <div class="verb-extra-block" id="verb-notes-block" style="display:none;" onclick="toggleVerbExtra('notes')">
-                <div class="small-lbl">Notes</div>
+                <div class="small-lbl">Pattern / Notes</div>
                 <div class="verb-extra-text hidden-field" id="v-notes-text">tap to reveal</div>
             </div>
             <button class="check-btn" id="verb-reveal-btn" onclick="revealAllVerbs()">Reveal all &amp; grade</button>
@@ -723,13 +717,12 @@
     ];
     const SIMPLE_LIST_FIELDS = {
         Verbs: [
-            { key: "en",   label: "English",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[0] || "") },
-            { key: "inf",  label: "Infinitive", cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => articleHTML(r[1] || "") },
-            { key: "pres", label: "Present",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[2] || "") },
-            { key: "past", label: "Past",       cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[3] || "") },
-            { key: "perf",  label: "Perfect",     cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[4] || "") },
-            { key: "prep",  label: "Prep & case",  cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[5] || "—") },
-            { key: "notes", label: "Notes",        cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[6] || "—") }
+            { key: "en",    label: "English",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[0] || "") },
+            { key: "inf",   label: "Infinitiv",  cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => articleHTML(r[1] || "") },
+            { key: "praet", label: "Präteritum", cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[2] || "") },
+            { key: "perf",  label: "Perfekt",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[3] || "") },
+            { key: "pres",  label: "Präsens",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[4] || "") },
+            { key: "notes", label: "Pattern / Notes", cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[5] || "—") }
         ]
     };
     function simpleFieldsFor(mode) { return SIMPLE_LIST_FIELDS[mode] || DEFAULT_SIMPLE_FIELDS; }
@@ -1322,18 +1315,16 @@
             document.getElementById("vocab-input").focus();
         }
         else if (currentMode === "Verbs") {
-            ["main","pres","past","fut"].forEach(id => document.getElementById("verb-card-" + id).classList.remove("flipped"));
+            ["main","past","fut"].forEach(id => document.getElementById("verb-card-" + id).classList.remove("flipped"));
             document.getElementById("verb-reveal-btn").style.display = "block";
             document.getElementById("v-en-main").innerText = row[0] || "";
             document.getElementById("v-de-main").innerText = row[1] || "";
-            document.getElementById("v-de-pres").innerText = row[2] || "";
-            document.getElementById("v-de-past").innerText = row[3] || "";
-            document.getElementById("v-de-fut").innerText  = row[4] || "";
-            verbExtraValue = { prep: row[5] || "", notes: row[6] || "" };
-            verbExtraRevealed = { prep: false, notes: false };
-            document.getElementById("verb-prep-block").style.display = verbExtraValue.prep ? "block" : "none";
+            document.getElementById("v-de-past").innerText = row[2] || "";
+            document.getElementById("v-de-fut").innerText  = row[3] || "";
+            verbExtraValue = { pres: row[4] || "", notes: row[5] || "" };
+            verbExtraRevealed = { pres: false, notes: false };
             document.getElementById("verb-notes-block").style.display = verbExtraValue.notes ? "block" : "none";
-            paintVerbExtra("prep"); paintVerbExtra("notes");
+            paintVerbExtra("pres"); paintVerbExtra("notes");
         }
         else if (currentMode === "FillBlanks") {
             document.getElementById("fill-input-area").style.display = "block";
@@ -1380,8 +1371,8 @@
 
     // Preposition & Notes are free-text (can run to a full sentence), so they're shown as
     // tap-to-reveal paragraph blocks rather than fixed-size flip cards like the other fields.
-    let verbExtraValue = { prep: "", notes: "" };
-    let verbExtraRevealed = { prep: false, notes: false };
+    let verbExtraValue = { pres: "", notes: "" };
+    let verbExtraRevealed = { pres: false, notes: false };
     function paintVerbExtra(key) {
         const el = document.getElementById("v-" + key + "-text");
         const revealed = verbExtraRevealed[key];
@@ -1393,8 +1384,8 @@
         paintVerbExtra(key);
     }
     function revealAllVerbs() {
-        ["main","pres","past","fut"].forEach(id => { const c = document.getElementById("verb-card-" + id); if (!c.classList.contains("flipped")) c.classList.add("flipped"); });
-        verbExtraRevealed = { prep: true, notes: true }; paintVerbExtra("prep"); paintVerbExtra("notes");
+        ["main","past","fut"].forEach(id => { const c = document.getElementById("verb-card-" + id); if (!c.classList.contains("flipped")) c.classList.add("flipped"); });
+        verbExtraRevealed = { pres: true, notes: true }; paintVerbExtra("pres"); paintVerbExtra("notes");
         document.getElementById("verb-reveal-btn").style.display = "none"; revealControls(); markResult(true, false);
     }
 
@@ -2099,7 +2090,7 @@
         if (_headers[table] && _headers[table].length) return _headers[table].map(h => h || "");
         return ({
             Vocabulary: ["English","German","Plural / note","Example (optional)"],
-            Verbs:      ["English","Infinitive","Present","Past","Perfect","Preposition & case (optional)","Notes (optional)"],
+            Verbs:      ["English","Infinitiv","Präteritum","Perfekt","Präsens — full conjugation (changing letters highlighted)","Pattern / Notes"],
             FillBlanks: ["English sentence","German with ___","Missing word"],
             Sentences:  ["English","German"],
             Jumble:     ["English","German (correct order)"],
