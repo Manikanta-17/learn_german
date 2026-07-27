@@ -261,6 +261,8 @@
         .field-check { display:inline-flex; align-items:center; gap:6px; background:var(--bg-color); color:var(--text-main);
             border:1px solid var(--border-color); padding:7px 12px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; }
         .field-check input { width:15px; height:15px; cursor:pointer; accent-color:var(--teal); }
+        .field-toggle-group { display:inline-flex; align-items:center; gap:4px; }
+        .mass-hide-btn { padding:7px 9px; font-size:14px; }
 
         @media (max-width:520px) {
             body { padding:12px; }
@@ -667,7 +669,9 @@
     // Word-list (browse) state
     let listEntries = [];
     let simpleListMode = false;  // true = numbered German-only quick-recall list
-    let simpleHidden = new Set();  // field keys currently hidden in Simple List, per SIMPLE_LIST_FIELDS
+    let simpleHidden = new Set();      // field keys whose column is removed entirely (the checkbox)
+    let simpleMassHidden = new Set();  // field keys currently mass-hidden — every word starts as
+                                        // "tap to reveal", independent per word (the eye icon)
     let listReturn = null;
     let listArticleFilter = "";
     let listTagFilter = new Set();   // multi-select tag filter (pending — chip selection, not yet applied)
@@ -1711,7 +1715,8 @@
         listArticleFilter = ""; listSingleTable = opts.singleTable || null;
         listTagFilter = new Set(); listUntaggedOnly = false; listMatchAll = false;
         appliedTagFilter = new Set(); appliedUntaggedOnly = false; appliedMatchAll = false;
-        bulkMode = false; bulkSelected = new Set(); simpleListMode = false; simpleHidden = new Set();
+        bulkMode = false; bulkSelected = new Set(); simpleListMode = false;
+        simpleHidden = new Set(); simpleMassHidden = new Set();
         document.getElementById("list-title").innerText = title;
         document.getElementById("bulk-btn").classList.remove("on");
         document.getElementById("bulk-btn").style.display = "";
@@ -1896,7 +1901,7 @@
                 simpleFieldsFor(d.mode).forEach(f => {
                     if (simpleHidden.has(f.key)) return;   // checkbox off -> column not rendered at all
                     const el = document.createElement("span"); el.className = f.cls + " " + f.simpleCls;
-                    fillHideable(el, f.hiddenCls, false, () => f.get(r, d));
+                    fillHideable(el, f.hiddenCls, simpleMassHidden.has(f.key), () => f.get(r, d));
                     row.appendChild(el);
                 });
 
@@ -1922,7 +1927,7 @@
             simpleFieldsFor(d.mode).forEach(f => {
                 if (simpleHidden.has(f.key)) return;   // checkbox off -> column not rendered at all
                 const el = document.createElement("span"); el.className = f.cls;
-                fillHideable(el, f.hiddenCls, false, () => f.get(r, d));
+                fillHideable(el, f.hiddenCls, simpleMassHidden.has(f.key), () => f.get(r, d));
                 row.appendChild(el);
             });
 
@@ -2013,23 +2018,45 @@
         renderWordList();
     }
 
-    // Column-visibility checkboxes shown above the word list — same simpleHidden state and
-    // field set (see activeSimpleFields) drives both the normal list and Simple List, so a
-    // choice made in one carries over to the other.
+    // Two independent controls per field, shown above the word list and shared by both the
+    // normal list and Simple List (see activeSimpleFields):
+    //   - checkbox: does this column exist in the row at all (simpleHidden)
+    //   - eye icon (only when the column exists): mass-hide/reveal every word in that column
+    //     at once, same as the old Hide English/Hide German buttons (simpleMassHidden) — each
+    //     word stays individually tappable to reveal/hide itself within that state.
     function renderFieldToggles() {
         const wrap = document.getElementById("simple-field-toggles");
         wrap.innerHTML = "";
         activeSimpleFields().forEach(f => {
+            const group = document.createElement("span"); group.className = "field-toggle-group";
+
             const lbl = document.createElement("label"); lbl.className = "field-check";
             const cb = document.createElement("input"); cb.type = "checkbox";
             cb.checked = !simpleHidden.has(f.key);
             cb.onchange = () => {
                 if (cb.checked) simpleHidden.delete(f.key); else simpleHidden.add(f.key);
+                renderFieldToggles();
                 renderWordList();
             };
             lbl.appendChild(cb);
             lbl.appendChild(document.createTextNode(" " + f.label));
-            wrap.appendChild(lbl);
+            group.appendChild(lbl);
+
+            if (!simpleHidden.has(f.key)) {
+                const massHidden = simpleMassHidden.has(f.key);
+                const eye = document.createElement("button");
+                eye.className = "toggle-btn mass-hide-btn" + (massHidden ? " on" : "");
+                eye.innerText = massHidden ? "👁" : "🙈";
+                eye.title = massHidden ? "Show all " + f.label : "Hide all " + f.label;
+                eye.onclick = () => {
+                    if (simpleMassHidden.has(f.key)) simpleMassHidden.delete(f.key); else simpleMassHidden.add(f.key);
+                    renderFieldToggles();
+                    renderWordList();
+                };
+                group.appendChild(eye);
+            }
+
+            wrap.appendChild(group);
         });
     }
 
