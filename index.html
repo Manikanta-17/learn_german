@@ -806,14 +806,22 @@
         item.lastPracticed = todayStr();
     }
     function realTables() { return Object.keys(appData).filter(k => k !== "_tableOrder"); }
+    // Every real table, in _tableOrder's order, with any table missing from that list
+    // (e.g. from a stale save) appended at the end rather than silently dropped.
+    function allTables() {
+        const real = realTables();
+        const order = appData._tableOrder || [];
+        const ordered = order.filter(t => t !== "_tableOrder" && real.includes(t));
+        const missing = real.filter(t => !ordered.includes(t));
+        return ordered.concat(missing);
+    }
     function sectionOf(t) { return _sections[t] || null; }
     function displayName(t) {
         const parts = t.split(/[_ ]+/).filter(Boolean);
         return parts.length ? parts[parts.length - 1] : t;   // last word
     }
     function tablesInSection(mode) {
-        const order = appData._tableOrder || realTables();
-        return order.filter(t => t !== "_tableOrder" && appData[t] && sectionOf(t) === mode);
+        return allTables().filter(t => appData[t] && sectionOf(t) === mode);
     }
     function toast(msg) {
         const t = document.getElementById("toast");
@@ -967,7 +975,9 @@
                     return;
                 }
 
-                let newOrder = [];
+                // Start from tables already known (this import is a merge, not a replacement —
+                // a Table_Index that only lists e.g. verb tables must not drop every other hub).
+                let newOrder = appData._tableOrder ? appData._tableOrder.slice() : realTables();
                 for (let i = 1; i < idx.length; i++) {
                     const r = idx[i]; if (!r) continue;
                     const sheetName = r[cSheet], tableName = r[cTable], range = r[cRange];
@@ -1007,8 +1017,8 @@
     function exportExcel() {
         if (realTables().length === 0) { toast("Nothing to back up yet"); return; }
         let rows = [];
-        (appData._tableOrder || realTables()).forEach(t => {
-            if (t === "_tableOrder" || !appData[t]) return;
+        allTables().forEach(t => {
+            if (!appData[t]) return;
             appData[t].forEach(w => {
                 const r = w.rowData || [];
                 rows.push({
@@ -2183,10 +2193,9 @@
             if (!name) { toast("Enter a name for the new table"); return; }
             if (appData[name]) { toast("A table with that name already exists"); return; }
             mode = document.getElementById("quickadd-newtable-section").value;
-            const order = appData._tableOrder || realTables();
             appData[name] = [];
             _sections[name] = mode;
-            appData._tableOrder = order.concat([name]);
+            appData._tableOrder = allTables().concat([name]);
             table = name;
         } else {
             mode = sectionOf(table);
