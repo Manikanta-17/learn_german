@@ -258,6 +258,9 @@
         .list-speak { background:none; border:none; cursor:pointer; font-size:18px; color:var(--text-main); }
         .toggle-btn { background:var(--bg-color); color:var(--text-main); border:1px solid var(--border-color); padding:8px 12px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; }
         .toggle-btn.on { background:var(--teal); color:#fff; border-color:var(--teal); }
+        .field-check { display:inline-flex; align-items:center; gap:6px; background:var(--bg-color); color:var(--text-main);
+            border:1px solid var(--border-color); padding:7px 12px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:bold; }
+        .field-check input { width:15px; height:15px; cursor:pointer; accent-color:var(--teal); }
 
         @media (max-width:520px) {
             body { padding:12px; }
@@ -467,9 +470,7 @@
                 </div>
             </div>
             <div class="list-controls">
-                <button class="toggle-btn" id="hide-en-btn" onclick="toggleHideEnglish()">🙈 Hide English</button>
-                <button class="toggle-btn" id="hide-de-btn" onclick="toggleHideGerman()">🙈 Hide German</button>
-                <span id="simple-field-toggles" style="display:none;"></span>
+                <span id="simple-field-toggles" style="display:contents;"></span>
                 <button class="toggle-btn" id="bulk-btn" onclick="toggleBulk()">☑️ Select</button>
                 <button class="toggle-btn" id="simple-list-btn" onclick="toggleSimpleList()">🔤 Simple List</button>
             </div>
@@ -665,8 +666,6 @@
 
     // Word-list (browse) state
     let listEntries = [];
-    let hideGerman = false;
-    let hideEnglish = false;
     let simpleListMode = false;  // true = numbered German-only quick-recall list
     let simpleHidden = new Set();  // field keys currently hidden in Simple List, per SIMPLE_LIST_FIELDS
     let listReturn = null;
@@ -711,18 +710,20 @@
 
     // Simple List field sets: hubs not listed here get the English/German default.
     // get(rowData, displayRecord) must return already-safe HTML/text.
+    // cls applies in both the normal list and Simple List; simpleCls is extra styling
+    // (bigger font) added only when actually browsing in Simple List mode.
     const DEFAULT_SIMPLE_FIELDS = [
-        { key: "en", label: "English", cls: "list-en simple-en", hiddenCls: "hidden-en", get: (r, d) => escapeHTML(d.en) },
-        { key: "de", label: "German",  cls: "list-de simple-de", hiddenCls: "hidden-de", get: (r, d) => articleHTML(d.de) }
+        { key: "en", label: "English", cls: "list-en", simpleCls: "simple-en", hiddenCls: "hidden-en", get: (r, d) => escapeHTML(d.en) },
+        { key: "de", label: "German",  cls: "list-de", simpleCls: "simple-de", hiddenCls: "hidden-de", get: (r, d) => articleHTML(d.de) }
     ];
     const SIMPLE_LIST_FIELDS = {
         Verbs: [
-            { key: "en",    label: "English",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[0] || "") },
-            { key: "inf",   label: "Infinitiv",  cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => articleHTML(r[1] || "") },
-            { key: "praet", label: "Präteritum", cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[2] || "") },
-            { key: "perf",  label: "Perfekt",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[3] || "") },
-            { key: "pres",  label: "Präsens",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[4] || "") },
-            { key: "notes", label: "Pattern / Notes", cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[5] || "—") }
+            { key: "en",    label: "English",    cls: "list-field", simpleCls: "simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[0] || "") },
+            { key: "inf",   label: "Infinitiv",  cls: "list-field", simpleCls: "simple-field", hiddenCls: "hidden-field", get: (r) => articleHTML(r[1] || "") },
+            { key: "praet", label: "Präteritum", cls: "list-field", simpleCls: "simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[2] || "") },
+            { key: "perf",  label: "Perfekt",    cls: "list-field", simpleCls: "simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[3] || "") },
+            { key: "pres",  label: "Präsens",    cls: "list-field", simpleCls: "simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[4] || "") },
+            { key: "notes", label: "Pattern / Notes", cls: "list-field", simpleCls: "simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[5] || "—") }
         ]
     };
     function simpleFieldsFor(mode) { return SIMPLE_LIST_FIELDS[mode] || DEFAULT_SIMPLE_FIELDS; }
@@ -1706,23 +1707,17 @@
 
     function openWordList(entries, title, returnFn, opts) {
         opts = opts || {};
-        listEntries = entries; listReturn = returnFn; hideGerman = false; hideEnglish = false;
+        listEntries = entries; listReturn = returnFn;
         listArticleFilter = ""; listSingleTable = opts.singleTable || null;
         listTagFilter = new Set(); listUntaggedOnly = false; listMatchAll = false;
         appliedTagFilter = new Set(); appliedUntaggedOnly = false; appliedMatchAll = false;
         bulkMode = false; bulkSelected = new Set(); simpleListMode = false; simpleHidden = new Set();
         document.getElementById("list-title").innerText = title;
-        document.getElementById("hide-en-btn").classList.remove("on");
-        document.getElementById("hide-en-btn").innerText = "🙈 Hide English";
-        document.getElementById("hide-en-btn").style.display = "";
-        document.getElementById("hide-de-btn").classList.remove("on");
-        document.getElementById("hide-de-btn").innerText = "🙈 Hide German";
-        document.getElementById("hide-de-btn").style.display = "";
         document.getElementById("bulk-btn").classList.remove("on");
         document.getElementById("bulk-btn").style.display = "";
         document.getElementById("bulk-bar").style.display = "none";
         document.getElementById("simple-list-btn").classList.remove("on");
-        document.getElementById("simple-field-toggles").style.display = "none";
+        renderFieldToggles();
 
         // article filter only when every entry is vocabulary
         const vocabOnly = entries.length > 0 && entries.every(e => sectionOf(e.tableName) === "Vocabulary");
@@ -1893,6 +1888,7 @@
 
         rows.forEach((e, i) => {
             const d = entryDisplay(e);
+            const r = e.data.rowData || [];
             const row = document.createElement("div"); row.className = "list-row";
 
             const numEl = document.createElement("span"); numEl.className = "list-num"; numEl.innerText = (i + 1) + ".";
@@ -1900,9 +1896,8 @@
 
             if (simpleListMode) {
                 row.classList.add("simple-row");
-                const r = e.data.rowData || [];
                 simpleFieldsFor(d.mode).forEach(f => {
-                    const el = document.createElement("span"); el.className = f.cls;
+                    const el = document.createElement("span"); el.className = f.cls + " " + f.simpleCls;
                     fillHideable(el, f.hiddenCls, simpleHidden.has(f.key), () => f.get(r, d));
                     row.appendChild(el);
                 });
@@ -1926,19 +1921,18 @@
                 row.appendChild(cb);
             }
 
-            const enEl = document.createElement("span"); enEl.className = "list-en";
-            fillHideable(enEl, "hidden-en", hideEnglish, () => escapeHTML(d.en));
-
-            const deEl = document.createElement("span"); deEl.className = "list-de";
-            fillHideable(deEl, "hidden-de", hideGerman, () => articleHTML(d.de));
+            simpleFieldsFor(d.mode).forEach(f => {
+                const el = document.createElement("span"); el.className = f.cls;
+                fillHideable(el, f.hiddenCls, simpleHidden.has(f.key), () => f.get(r, d));
+                row.appendChild(el);
+            });
 
             const actions = document.createElement("span"); actions.className = "list-actions";
             const spk = document.createElement("button"); spk.innerText = "🔊"; spk.title = "Listen"; spk.onclick = () => speakText(d.speak || d.de);
             const edit = document.createElement("button"); edit.innerText = "✏️"; edit.title = "Edit"; edit.onclick = () => openWordEdit(e);
             const del = document.createElement("button"); del.innerText = "🗑️"; del.title = "Delete"; del.onclick = () => deleteWord(e);
             actions.appendChild(spk); actions.appendChild(edit); actions.appendChild(del);
-
-            row.appendChild(enEl); row.appendChild(deEl); row.appendChild(actions);
+            row.appendChild(actions);
             if (d.ex) { const ex = document.createElement("span"); ex.className = "list-ex"; ex.innerText = "„" + d.ex + '"'; row.appendChild(ex); }
 
             // inline category chips (tag from the list itself)
@@ -2010,52 +2004,33 @@
         tagPickerEntry = null;
     }
 
-    function toggleHideGerman() {
-        hideGerman = !hideGerman;
-        const btn = document.getElementById("hide-de-btn");
-        btn.classList.toggle("on", hideGerman);
-        btn.innerText = hideGerman ? "👁 Show German" : "🙈 Hide German";
-        renderWordList();
-    }
-    function toggleHideEnglish() {
-        hideEnglish = !hideEnglish;
-        const btn = document.getElementById("hide-en-btn");
-        btn.classList.toggle("on", hideEnglish);
-        btn.innerText = hideEnglish ? "👁 Show English" : "🙈 Hide English";
-        renderWordList();
-    }
     function closeWordList() { if (listReturn) listReturn(); else goHome(); }
 
     function toggleSimpleList() {
         simpleListMode = !simpleListMode;
         document.getElementById("simple-list-btn").classList.toggle("on", simpleListMode);
         document.getElementById("bulk-btn").style.display = simpleListMode ? "none" : "";
-        document.getElementById("hide-en-btn").style.display = simpleListMode ? "none" : "";
-        document.getElementById("hide-de-btn").style.display = simpleListMode ? "none" : "";
         if (simpleListMode && bulkMode) toggleBulk();
-        renderSimpleFieldToggles();
         renderWordList();
     }
 
-    // Rebuilds the per-field hide/show toggle row shown above Simple List, based on the
-    // union of fields for every hub present in the currently open list (see activeSimpleFields).
-    function renderSimpleFieldToggles() {
+    // Column-visibility checkboxes shown above the word list — same simpleHidden state and
+    // field set (see activeSimpleFields) drives both the normal list and Simple List, so a
+    // choice made in one carries over to the other.
+    function renderFieldToggles() {
         const wrap = document.getElementById("simple-field-toggles");
-        if (!simpleListMode) { wrap.style.display = "none"; wrap.innerHTML = ""; return; }
-        wrap.style.display = "contents";
         wrap.innerHTML = "";
         activeSimpleFields().forEach(f => {
-            const btn = document.createElement("button");
-            btn.className = "toggle-btn";
-            const isHidden = simpleHidden.has(f.key);
-            btn.classList.toggle("on", isHidden);
-            btn.innerText = (isHidden ? "👁 Show " : "🙈 Hide ") + f.label;
-            btn.onclick = () => {
-                if (simpleHidden.has(f.key)) simpleHidden.delete(f.key); else simpleHidden.add(f.key);
-                renderSimpleFieldToggles();
+            const lbl = document.createElement("label"); lbl.className = "field-check";
+            const cb = document.createElement("input"); cb.type = "checkbox";
+            cb.checked = !simpleHidden.has(f.key);
+            cb.onchange = () => {
+                if (cb.checked) simpleHidden.delete(f.key); else simpleHidden.add(f.key);
                 renderWordList();
             };
-            wrap.appendChild(btn);
+            lbl.appendChild(cb);
+            lbl.appendChild(document.createTextNode(" " + f.label));
+            wrap.appendChild(lbl);
         });
     }
 
@@ -2243,7 +2218,7 @@
     function browseSection(mode) {
         const entries = [];
         tablesInSection(mode).forEach(t => appData[t].forEach((w, i) => entries.push({ tableName: t, index: i, data: w })));
-        openWordList(entries, HUBS.find(h => h.mode === mode).title + " — all words", () => openSection(mode), { sectionMode: mode });
+        openWordList(entries, HUBS.find(h => h.mode === mode).title + " — words", () => openSection(mode), { sectionMode: mode });
     }
     function runSearch() {
         const q = (document.getElementById("search-input").value || "").trim().toLowerCase();
