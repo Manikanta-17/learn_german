@@ -154,6 +154,11 @@
         .sub-cards-row { display:flex; gap:10px; width:100%; margin-bottom:15px; }
         .sub-card-container { flex:1; height:120px; perspective:1000px; cursor:pointer; }
         .sub-card-container .card-face { font-size:16px; padding:10px; }
+        .verb-extra-block { width:100%; box-sizing:border-box; background-color:var(--card-bg); border-radius:12px;
+            padding:14px 16px; margin-bottom:15px; cursor:pointer; min-height:60px; }
+        .verb-extra-block .small-lbl { display:block; position:static; margin-bottom:6px; }
+        .verb-extra-text { font-size:17px; line-height:1.5; white-space:pre-wrap; word-wrap:break-word; }
+        .verb-extra-text.hidden-field { color:var(--text-muted); font-style:italic; font-weight:normal; }
 
         .sentence-box { background:var(--bg-color); padding:20px; border-radius:12px; border:1px solid var(--border-color);
             margin-bottom:15px; width:100%; text-align:center; font-size:18px; font-weight:bold; }
@@ -392,12 +397,14 @@
                         <div class="card-face card-back" id="v-de-fut"></div>
                     </div>
                 </div>
-                <div class="sub-card-container" id="verb-prep-container" style="display:none;" onclick="flipVerbCard('prep')">
-                    <div class="card" id="verb-card-prep">
-                        <div class="card-face card-front">Prep &amp; case</div>
-                        <div class="card-face card-back" id="v-de-prep"></div>
-                    </div>
-                </div>
+            </div>
+            <div class="verb-extra-block" id="verb-prep-block" style="display:none;" onclick="toggleVerbExtra('prep')">
+                <div class="small-lbl">Preposition &amp; case</div>
+                <div class="verb-extra-text hidden-field" id="v-prep-text">tap to reveal</div>
+            </div>
+            <div class="verb-extra-block" id="verb-notes-block" style="display:none;" onclick="toggleVerbExtra('notes')">
+                <div class="small-lbl">Notes</div>
+                <div class="verb-extra-text hidden-field" id="v-notes-text">tap to reveal</div>
             </div>
             <button class="check-btn" id="verb-reveal-btn" onclick="revealAllVerbs()">Reveal all &amp; grade</button>
         </div>
@@ -720,8 +727,9 @@
             { key: "inf",  label: "Infinitive", cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => articleHTML(r[1] || "") },
             { key: "pres", label: "Present",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[2] || "") },
             { key: "past", label: "Past",       cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[3] || "") },
-            { key: "perf", label: "Perfect",    cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[4] || "") },
-            { key: "prep", label: "Prep & case", cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[5] || "—") }
+            { key: "perf",  label: "Perfect",     cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[4] || "") },
+            { key: "prep",  label: "Prep & case",  cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[5] || "—") },
+            { key: "notes", label: "Notes",        cls: "list-field simple-field", hiddenCls: "hidden-field", get: (r) => escapeHTML(r[6] || "—") }
         ]
     };
     function simpleFieldsFor(mode) { return SIMPLE_LIST_FIELDS[mode] || DEFAULT_SIMPLE_FIELDS; }
@@ -1314,16 +1322,18 @@
             document.getElementById("vocab-input").focus();
         }
         else if (currentMode === "Verbs") {
-            ["main","pres","past","fut","prep"].forEach(id => document.getElementById("verb-card-" + id).classList.remove("flipped"));
+            ["main","pres","past","fut"].forEach(id => document.getElementById("verb-card-" + id).classList.remove("flipped"));
             document.getElementById("verb-reveal-btn").style.display = "block";
             document.getElementById("v-en-main").innerText = row[0] || "";
             document.getElementById("v-de-main").innerText = row[1] || "";
             document.getElementById("v-de-pres").innerText = row[2] || "";
             document.getElementById("v-de-past").innerText = row[3] || "";
             document.getElementById("v-de-fut").innerText  = row[4] || "";
-            const prep = row[5] || "";
-            document.getElementById("v-de-prep").innerText = prep;
-            document.getElementById("verb-prep-container").style.display = prep ? "" : "none";
+            verbExtraValue = { prep: row[5] || "", notes: row[6] || "" };
+            verbExtraRevealed = { prep: false, notes: false };
+            document.getElementById("verb-prep-block").style.display = verbExtraValue.prep ? "block" : "none";
+            document.getElementById("verb-notes-block").style.display = verbExtraValue.notes ? "block" : "none";
+            paintVerbExtra("prep"); paintVerbExtra("notes");
         }
         else if (currentMode === "FillBlanks") {
             document.getElementById("fill-input-area").style.display = "block";
@@ -1367,8 +1377,24 @@
         card.classList.toggle("flipped");
         if (card.classList.contains("flipped")) speakText(document.getElementById(type === "main" ? "v-de-main" : "v-de-" + type).innerText);
     }
+
+    // Preposition & Notes are free-text (can run to a full sentence), so they're shown as
+    // tap-to-reveal paragraph blocks rather than fixed-size flip cards like the other fields.
+    let verbExtraValue = { prep: "", notes: "" };
+    let verbExtraRevealed = { prep: false, notes: false };
+    function paintVerbExtra(key) {
+        const el = document.getElementById("v-" + key + "-text");
+        const revealed = verbExtraRevealed[key];
+        el.classList.toggle("hidden-field", !revealed);
+        el.innerText = revealed ? (verbExtraValue[key] || "") : "tap to reveal";
+    }
+    function toggleVerbExtra(key) {
+        verbExtraRevealed[key] = !verbExtraRevealed[key];
+        paintVerbExtra(key);
+    }
     function revealAllVerbs() {
-        ["main","pres","past","fut","prep"].forEach(id => { const c = document.getElementById("verb-card-" + id); if (!c.classList.contains("flipped")) c.classList.add("flipped"); });
+        ["main","pres","past","fut"].forEach(id => { const c = document.getElementById("verb-card-" + id); if (!c.classList.contains("flipped")) c.classList.add("flipped"); });
+        verbExtraRevealed = { prep: true, notes: true }; paintVerbExtra("prep"); paintVerbExtra("notes");
         document.getElementById("verb-reveal-btn").style.display = "none"; revealControls(); markResult(true, false);
     }
 
@@ -2073,7 +2099,7 @@
         if (_headers[table] && _headers[table].length) return _headers[table].map(h => h || "");
         return ({
             Vocabulary: ["English","German","Plural / note","Example (optional)"],
-            Verbs:      ["English","Infinitive","Present","Past","Perfect","Preposition & case (optional)"],
+            Verbs:      ["English","Infinitive","Present","Past","Perfect","Preposition & case (optional)","Notes (optional)"],
             FillBlanks: ["English sentence","German with ___","Missing word"],
             Sentences:  ["English","German"],
             Jumble:     ["English","German (correct order)"],
