@@ -1826,20 +1826,17 @@
         return m ? m[1].toLowerCase() : "";
     }
 
-    // Fills a list-row field, wiring up tap-to-reveal when that side is hidden.
-    // htmlFn is called lazily (only once revealed) so it can be cheap either way.
-    function fillHideable(el, hiddenClass, isHidden, htmlFn) {
-        if (isHidden) {
-            let revealed = false;
-            const paint = () => {
-                el.classList.toggle(hiddenClass, !revealed);
-                el.innerHTML = revealed ? htmlFn() : "tap to reveal";
-            };
-            el.onclick = () => { revealed = !revealed; paint(); };
-            paint();
-        } else {
-            el.innerHTML = htmlFn();
-        }
+    // Fills a list-row field with a tap-to-toggle reveal/hide, regardless of starting state —
+    // this is per-word self-quizzing, independent of whether the column itself is shown at all
+    // (that's decided by the caller choosing whether to create this element in the first place).
+    function fillHideable(el, hiddenClass, startHidden, htmlFn) {
+        let revealed = !startHidden;
+        const paint = () => {
+            el.classList.toggle(hiddenClass, !revealed);
+            el.innerHTML = revealed ? htmlFn() : "tap to reveal";
+        };
+        el.onclick = () => { revealed = !revealed; paint(); };
+        paint();
     }
 
     // Fires onFire after a touch is held on el without moving — the mobile equivalent
@@ -1897,8 +1894,9 @@
             if (simpleListMode) {
                 row.classList.add("simple-row");
                 simpleFieldsFor(d.mode).forEach(f => {
+                    if (simpleHidden.has(f.key)) return;   // checkbox off -> column not rendered at all
                     const el = document.createElement("span"); el.className = f.cls + " " + f.simpleCls;
-                    fillHideable(el, f.hiddenCls, simpleHidden.has(f.key), () => f.get(r, d));
+                    fillHideable(el, f.hiddenCls, false, () => f.get(r, d));
                     row.appendChild(el);
                 });
 
@@ -1922,8 +1920,9 @@
             }
 
             simpleFieldsFor(d.mode).forEach(f => {
+                if (simpleHidden.has(f.key)) return;   // checkbox off -> column not rendered at all
                 const el = document.createElement("span"); el.className = f.cls;
-                fillHideable(el, f.hiddenCls, simpleHidden.has(f.key), () => f.get(r, d));
+                fillHideable(el, f.hiddenCls, false, () => f.get(r, d));
                 row.appendChild(el);
             });
 
