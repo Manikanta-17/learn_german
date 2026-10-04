@@ -20,11 +20,15 @@
             --border-color:#dddddd; --modal-overlay:rgba(0,0,0,0.5); --header-border:#eeeeee;
             --hub-hover:#e9ecef; --accent:#007BFF; --accent-dark:#0056b3;
             --green:#28a745; --red:#dc3545; --teal:#17a2b8; --amber:#f39c12;
+            --lb-box-border:#e2e5ea; --lb-box-active-bg:rgba(0,123,255,0.08);
+            --lb-hint-color:#9aa0a8; --lb-footer-bg:rgba(0,0,0,0.02);
         }
         [data-theme="dark"] {
             --bg-color:#121212; --card-bg:#1e1e1e; --text-main:#f0f0f0; --text-muted:#aaaaaa;
             --border-color:#333333; --modal-overlay:rgba(0,0,0,0.8); --header-border:#333333;
             --hub-hover:#2d2d2d;
+            --lb-box-border:#3a3f47; --lb-box-active-bg:rgba(110,168,255,0.15);
+            --lb-hint-color:#7a8088; --lb-footer-bg:rgba(255,255,255,0.04);
         }
 
         * { box-sizing:border-box; }
@@ -264,11 +268,88 @@
         .field-toggle-group { display:inline-flex; align-items:center; gap:4px; }
         .mass-hide-btn { padding:7px 9px; font-size:14px; }
 
+        .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden;
+            clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+
+        /* Letter-box drill */
+        #letterbox-area { max-width:640px; }
+        .lb-tabs { display:inline-flex; background:var(--bg-color); border-radius:20px; padding:3px; gap:2px; margin-bottom:18px; }
+        .lb-tab { border:none; background:transparent; color:var(--text-main); padding:8px 16px; border-radius:17px;
+            font-size:13px; font-weight:bold; cursor:pointer; }
+        .lb-tab.on { background:#333; color:#fff; }
+        [data-theme="dark"] .lb-tab.on { background:#555; }
+
+        .lb-progressbar { width:100%; height:6px; background:var(--border-color); border-radius:3px; overflow:hidden; margin-bottom:4px; }
+        .lb-progressbar-fill { height:100%; width:0%; background:var(--accent); transition:width .3s; }
+        .lb-progress-text { font-size:11px; color:var(--text-muted); text-align:right; margin-bottom:14px; }
+
+        .lb-prompt { font-size:28px; font-weight:700; text-align:center; margin:4px 0 12px; color:var(--text-main); line-height:1.3; }
+        .lb-prompt .lb-marker { color:var(--accent); font-weight:500; }
+        .lb-prompt .lb-lexical { color:var(--text-main); font-weight:700; }
+        .lb-chips { display:flex; gap:8px; justify-content:center; align-items:center; margin-bottom:18px; }
+        .lb-important-btn { border:1px solid var(--border-color); }
+        .lb-important-btn.off { opacity:.55; }
+        .lb-hint-row { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+        .lb-hint-note { font-size:12px; color:var(--amber); }
+
+        .lb-boxes-wrap { position:relative; margin-bottom:18px; }
+        .lb-boxes { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; }
+        .lb-box { width:40px; height:52px; border:1px solid var(--lb-box-border); border-radius:8px;
+            display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700;
+            background:var(--card-bg); color:var(--text-main); position:relative; }
+        .lb-box.space { border:none; background:transparent; width:18px; }
+        .lb-box.hint { color:var(--lb-hint-color); }
+        .lb-box.active { background:var(--lb-box-active-bg); border-color:var(--accent); }
+        .lb-box.active::after { content:""; position:absolute; bottom:9px; width:2px; height:24px;
+            background:var(--accent); animation:lb-blink 1s step-end infinite; }
+        .lb-box.correct { background:rgba(40,167,69,.15); border-color:var(--green); color:var(--green); }
+        .lb-box.wrong { background:rgba(220,53,69,.12); border-color:var(--red); color:var(--red); }
+        .lb-boxes.lb-pop .lb-box.correct { animation:lb-pop .3s ease; }
+        .lb-boxes.lb-shake { animation:lb-shake .4s; }
+        @keyframes lb-blink { 50% { opacity:0; } }
+        @keyframes lb-pop { 0%{transform:scale(1);} 40%{transform:scale(1.15);} 100%{transform:scale(1);} }
+        @keyframes lb-shake { 10%,90%{transform:translateX(-2px);} 20%,80%{transform:translateX(3px);}
+            30%,50%,70%{transform:translateX(-5px);} 40%,60%{transform:translateX(5px);} }
+
+        .lb-hidden-input { position:absolute; inset:0; opacity:0; border:0; padding:0; margin:0; font-size:16px; cursor:text; }
+
+        .lb-specialchars { margin-bottom:6px; }
+        .lb-help-btn { width:16px; height:16px; border-radius:50%; border:1px solid var(--border-color);
+            background:transparent; color:var(--text-muted); font-size:10px; cursor:pointer; line-height:1; margin-left:4px; padding:0; }
+        .lb-help-popover { margin-top:8px; padding:10px 12px; background:var(--bg-color); border:1px solid var(--border-color);
+            border-radius:8px; font-size:12px; color:var(--text-muted); }
+        .lb-char-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+        .lb-char-btn { position:relative; width:36px; height:36px; border:1px solid var(--border-color); border-radius:8px;
+            background:var(--card-bg); color:var(--text-main); font-size:16px; cursor:pointer; }
+        .lb-char-btn .lb-digit { position:absolute; bottom:1px; right:3px; font-size:8px; color:var(--text-muted); }
+
+        .lb-mcq-options { display:flex; flex-direction:column; gap:10px; margin-top:6px; }
+        .lb-mcq-btn { padding:14px 16px; border:2px solid var(--border-color); border-radius:10px;
+            background:var(--card-bg); color:var(--text-main); font-size:16px; text-align:left; cursor:pointer; }
+        .lb-mcq-btn:hover { border-color:var(--accent); }
+        .lb-mcq-btn.correct { border-color:var(--green); background:rgba(40,167,69,.12); color:var(--green); font-weight:bold; }
+        .lb-mcq-btn.wrong { border-color:var(--red); background:rgba(220,53,69,.1); color:var(--red); }
+        .lb-mcq-btn:disabled { cursor:default; }
+
+        .lb-feedback { font-weight:bold; text-align:center; margin-top:16px; min-height:20px; }
+        .lb-feedback.ok { color:var(--green); }
+        .lb-feedback.warn { color:var(--amber); }
+        .lb-feedback.bad { color:var(--red); }
+        .lb-example { margin-top:8px; font-size:13px; color:var(--text-muted); text-align:center; font-style:italic; }
+
+        .lb-footer { display:flex; justify-content:space-between; align-items:center; gap:10px;
+            margin:20px -25px -25px; padding:14px 25px; background:var(--lb-footer-bg);
+            border-top:1px solid var(--border-color); border-radius:0 0 12px 12px; }
+        .lb-tip { font-size:12px; color:var(--text-muted); }
+        .lb-check-btn { width:auto; margin:0; padding:10px 18px; }
+
         @media (max-width:520px) {
             body { padding:12px; }
             .container { padding:18px; }
             .list-sticky { margin:-18px -18px 0; padding:18px 18px 10px; }
             .card-face { font-size:22px; }
+            .lb-box { width:32px; height:44px; font-size:18px; }
+            .lb-footer { margin:16px -18px -18px; padding:12px 18px; }
         }
         @media (prefers-reduced-motion: reduce) {
             *, .card { transition:none !important; }
@@ -319,6 +400,7 @@
 
         <!-- SECTION: summary + table cards -->
         <div id="view-section" style="display:none;">
+            <button class="primary-btn" id="addword-fab-btn" style="display:none; margin-bottom:16px;" onclick="openAddWordQuick()">➕ Add word or sentence</button>
             <div class="section-summary" id="section-summary"></div>
             <div class="table-grid" id="view-tables"></div>
         </div>
@@ -336,6 +418,10 @@
             </div>
             <div id="modal-grammar" style="display:none;">
                 <button class="primary-btn" onclick="initPractice('grammar')">Open grammar table</button>
+            </div>
+            <div id="modal-abpractice" style="display:none;">
+                <button class="primary-btn" onclick="openAbPractice('active')" style="background-color:#6f42c1;">🔤 Active Vocabulary Practice</button>
+                <button class="primary-btn" onclick="openAbPractice('passive')" style="background-color:#6f42c1;">👁 Passive Vocabulary Practice</button>
             </div>
             <button class="primary-btn" onclick="browseTable()" style="background-color:#6c757d;">📖 See all words</button>
             <button class="link-btn" onclick="closeModal()">Cancel</button>
@@ -444,6 +530,25 @@
         <!-- Grammar -->
         <div id="mode-Grammar" class="practice-wrapper" style="max-width:100%; overflow-x:auto;">
             <table class="grammar-table" id="grammar-grid"></table>
+        </div>
+
+        <!-- Add Word or Sentence -->
+        <div id="mode-AddWord" class="practice-wrapper">
+            <button class="reverse-toggle" id="aw-reverse-btn" onclick="toggleAwReverse()">⇄ EN → DE</button>
+            <div class="card-container" onclick="flipAwCard()">
+                <div class="card" id="aw-card">
+                    <div class="card-face card-front"><span class="small-lbl" id="aw-front-lbl">English</span><span id="aw-front-txt">Word</span></div>
+                    <div class="card-face card-back">
+                        <span class="small-lbl" id="aw-back-lbl">German</span>
+                        <span id="aw-back-txt">Wort</span>
+                        <span id="aw-extra" style="font-size:14px; font-weight:normal; margin-top:10px;"></span>
+                    </div>
+                </div>
+            </div>
+            <div id="aw-input-area" style="width:100%;">
+                <input type="text" id="aw-input" class="custom-input" placeholder="Type the German word or sentence…" onkeypress="if(event.key==='Enter') checkAnswer()">
+                <button class="check-btn" onclick="checkAnswer()">Check</button>
+            </div>
         </div>
 
         <!-- Shared tools -->
@@ -585,6 +690,67 @@
         </div>
     </div>
 
+    <!-- ============ ACTIVE / PASSIVE VOCABULARY PRACTICE ============ -->
+    <div class="container" id="letterbox-area" style="display:none;">
+        <div class="header-bar" style="padding-bottom:10px;">
+            <h2 id="lb-title">Vocabulary Practice</h2>
+            <button class="icon-btn" onclick="closeLetterbox()" title="Back">✖️</button>
+        </div>
+
+        <div class="lb-progressbar"><div class="lb-progressbar-fill" id="lb-progress-fill"></div></div>
+        <div class="lb-progress-text" id="lb-progress-text">0 / 0</div>
+
+        <div class="lb-tabs" id="lb-tabs">
+            <button class="lb-tab" data-lbmode="passive" onclick="switchLbMode('passive')">Passive</button>
+            <button class="lb-tab" data-lbmode="active" onclick="switchLbMode('active')">Active</button>
+        </div>
+
+        <div id="lb-prompt" class="lb-prompt"></div>
+        <div class="lb-chips">
+            <span class="fchip" id="lb-pos-chip"></span>
+            <span class="fchip mode" id="lb-dir-chip"></span>
+            <button type="button" class="fchip lb-important-btn" id="lb-important-btn" onclick="lbToggleImportant()"></button>
+        </div>
+
+        <!-- Active vocabulary: letter boxes -->
+        <div id="lb-active-area" style="display:none;">
+            <div class="lb-boxes-wrap" id="lb-boxes-wrap">
+                <div class="lb-boxes" id="lb-boxes"></div>
+                <input type="text" id="lb-hidden-input" class="lb-hidden-input"
+                       autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false"
+                       aria-label="Type the German translation">
+            </div>
+            <div class="lb-hint-row">
+                <button type="button" class="toggle-btn" onclick="lbUseHint()">💡 Hint</button>
+                <span class="lb-hint-note" id="lb-hint-note"></span>
+            </div>
+            <div class="lb-specialchars">
+                <div class="filter-label">Special characters
+                    <button type="button" class="lb-help-btn" tabindex="-1" onclick="toggleLbHelp()" aria-label="Special character shortcut help">?</button>
+                </div>
+                <div class="lb-char-row" id="lb-char-row"></div>
+                <div class="lb-help-popover" id="lb-help-popover" style="display:none;">
+                    Press number keys 1–7 while typing to insert the matching special character — the digit under each button shows its shortcut.
+                </div>
+            </div>
+        </div>
+
+        <!-- Passive vocabulary: multiple choice -->
+        <div id="lb-passive-area" style="display:none;">
+            <div class="lb-mcq-options" id="lb-mcq-options"></div>
+        </div>
+
+        <div id="lb-feedback" class="lb-feedback"></div>
+        <div id="lb-example" class="lb-example" style="display:none;"></div>
+
+        <div class="lb-footer" id="lb-footer">
+            <span class="lb-tip">Tip: Press Enter to check</span>
+            <button type="button" class="primary-btn lb-check-btn" id="lb-check-btn" tabindex="0" onclick="lbEnterOrCheck()">Check answer →</button>
+        </div>
+
+        <div id="lb-live" class="sr-only" aria-live="polite"></div>
+    </div>
+
     <!-- ============ SESSION SUMMARY ============ -->
     <div class="container" id="summary-area" style="display:none;">
         <div class="summary-card">
@@ -665,6 +831,7 @@
     let currentSection = null;   // which hub is open (null = home)
     let gradedThisSession = new Set();  // queue indices already scored (prevents double-count on back/forward)
     let vocabReverse = false;    // false = EN->DE, true = DE->EN
+    let awReverse = false;       // Add Word or Sentence: false = EN->DE, true = DE->EN
 
     // Word-list (browse) state
     let listEntries = [];
@@ -700,16 +867,18 @@
         { mode:"FillBlanks", icon:"🧩", title:"Fill in Blanks" },
         { mode:"Sentences",  icon:"💬", title:"Sentences" },
         { mode:"Jumble",     icon:"🔀", title:"Jumble" },
-        { mode:"Grammar",    icon:"📊", title:"Grammar" }
+        { mode:"Grammar",    icon:"📊", title:"Grammar" },
+        { mode:"AddWord",    icon:"📝", title:"Add Word or Sentence" }
     ];
 
     const tagMaps = {
-        "Vocabulary": ["Easy","Medium","Difficult","Not so important","Wrong Article","Wrong Spell"],
-        "Verbs":      ["Easy","Medium","Difficult","Not so important"],
+        "Vocabulary": ["Easy","Medium","Difficult","Not so important","Wrong Article","Wrong Spell","Known","Unknown"],
+        "Verbs":      ["Easy","Medium","Difficult","Not so important","Known","Unknown"],
         "FillBlanks": ["Easy","Medium","Difficult","Wrong Spell"],
         "Sentences":  ["Easy","Medium","Difficult","Grammar Mistake","Wrong Spell"],
         "Jumble":     ["Easy","Medium","Difficult","Wrong Spell"],
-        "Grammar":    ["Review Entire Table","Mastered"]
+        "Grammar":    ["Review Entire Table","Mastered"],
+        "AddWord":    ["Easy","Medium","Difficult","Not so important","Wrong Spell"]
     };
 
     // Simple List field sets: hubs not listed here get the English/German default.
@@ -843,6 +1012,7 @@
         if (k.startsWith("sent"))  return "Sentences";
         if (k.startsWith("jumb"))  return "Jumble";
         if (k.startsWith("gramm")) return "Grammar";
+        if (k.startsWith("add"))  return "AddWord";
         return null;
     }
 
@@ -1051,6 +1221,7 @@
         document.getElementById("list-area").style.display     = (name === "list")     ? "block" : "none";
         document.getElementById("progress-area").style.display = (name === "progress") ? "block" : "none";
         document.getElementById("settings-area").style.display = (name === "settings") ? "block" : "none";
+        document.getElementById("letterbox-area").style.display = (name === "letterbox") ? "block" : "none";
     }
 
     function goHome() {
@@ -1100,6 +1271,7 @@
         document.getElementById("home-extra").style.display = "none";
         document.getElementById("main-title").innerText = HUBS.find(h => h.mode === mode).title;
         document.getElementById("breadcrumb").style.display = "block";
+        document.getElementById("addword-fab-btn").style.display = (mode === "AddWord") ? "block" : "none";
 
         const tables = tablesInSection(mode);
 
@@ -1132,9 +1304,11 @@
         const grid = document.getElementById("view-tables");
         grid.innerHTML = "";
         if (tables.length === 0) {
-            grid.innerHTML = '<div class="empty-note">No ' + HUBS.find(h=>h.mode===mode).title +
-                ' tables yet.<br>In your Excel <b>Table_Index</b>, set the <b>Section</b> column to <b>' +
-                mode.toLowerCase() + '</b> for those tables, then import the file.</div>';
+            grid.innerHTML = (mode === "AddWord")
+                ? '<div class="empty-note">Nothing here yet.<br>Tap <b>➕ Add word or sentence</b> above to save the first thing you ran into today.</div>'
+                : '<div class="empty-note">No ' + HUBS.find(h=>h.mode===mode).title +
+                    ' tables yet.<br>In your Excel <b>Table_Index</b>, set the <b>Section</b> column to <b>' +
+                    mode.toLowerCase() + '</b> for those tables, then import the file.</div>';
             return;
         }
         tables.forEach(t => {
@@ -1175,6 +1349,7 @@
         const isGrammar = (sessionMode === "Grammar");
         document.getElementById("modal-standard").style.display = isGrammar ? "none" : "block";
         document.getElementById("modal-grammar").style.display  = isGrammar ? "block" : "none";
+        document.getElementById("modal-abpractice").style.display = (sessionMode === "Vocabulary" || sessionMode === "Verbs") ? "block" : "none";
         document.getElementById("practice-modal").style.display = "flex";
     }
     function closeModal() { document.getElementById("practice-modal").style.display = "none"; }
@@ -1359,6 +1534,29 @@
             document.getElementById("controls").style.display = "flex";
             document.getElementById("progress-text").innerText = displayName(obj.tableName) + " · full table";
         }
+        else if (currentMode === "AddWord") {
+            // rowData: [German word/sentence, English translation, example (optional)]
+            document.getElementById("aw-card").classList.remove("flipped");
+            document.getElementById("aw-input-area").style.display = "block";
+            document.getElementById("aw-input").value = "";
+            const de = row[0] || "", en = row[1] || "";
+            const frontLbl = document.getElementById("aw-front-lbl");
+            const backLbl  = document.getElementById("aw-back-lbl");
+            const frontEl  = document.getElementById("aw-front-txt");
+            const backEl   = document.getElementById("aw-back-txt");
+            if (!awReverse) {
+                frontLbl.innerText = "English"; frontEl.innerText = en;
+                backLbl.innerText  = "German";  backEl.innerHTML = articleHTML(de);
+                document.getElementById("aw-input").placeholder = "Type the German word or sentence…";
+            } else {
+                frontLbl.innerText = "German"; frontEl.innerHTML = articleHTML(de);
+                backLbl.innerText  = "English"; backEl.innerText = en;
+                document.getElementById("aw-input").placeholder = "Type the English translation…";
+            }
+            document.getElementById("aw-extra").innerHTML = row[2] ? '<span style="opacity:.85;">„' + row[2] + '"</span>' : "";
+            document.getElementById("aw-reverse-btn").innerText = awReverse ? "⇄ DE → EN" : "⇄ EN → DE";
+            document.getElementById("aw-input").focus();
+        }
     }
 
     function flipVocabCard() {
@@ -1366,6 +1564,17 @@
             document.getElementById("vocab-input-area").style.display = "none";
             document.getElementById("vocab-card").classList.add("flipped");
             revealControls(); speakText(practiceQueue[currentIndex].data.rowData[1]); markResult(true, false);
+        }
+    }
+    function toggleAwReverse() {
+        awReverse = !awReverse;
+        document.getElementById("aw-reverse-btn").innerText = awReverse ? "⇄ DE → EN" : "⇄ EN → DE";
+    }
+    function flipAwCard() {
+        if (document.getElementById("aw-input-area").style.display !== "none") {
+            document.getElementById("aw-input-area").style.display = "none";
+            document.getElementById("aw-card").classList.add("flipped");
+            revealControls(); speakText(practiceQueue[currentIndex].data.rowData[0]); markResult(true, false);
         }
     }
     function flipVerbCard(type) {
@@ -1473,6 +1682,14 @@
             document.getElementById("jumb-answers").style.display = "block";
             speakText(row[1]);
         }
+        else if (currentMode === "AddWord") {
+            const input = document.getElementById("aw-input").value; if (!input.trim()) return;
+            const answer = awReverse ? row[1] : row[0];
+            correct = normalize(input) === normalize(answer);
+            document.getElementById("aw-input-area").style.display = "none";
+            document.getElementById("aw-card").classList.add("flipped");
+            speakText(row[0]); // always pronounce the German
+        }
 
         resBox.innerText = correct ? "✅ Correct!" : "❌ Not quite — study the answer";
         resBox.style.color = correct ? "var(--green)" : "var(--red)";
@@ -1489,6 +1706,7 @@
         if (currentMode === "Vocabulary") return row[1];
         if (currentMode === "FillBlanks") return row[2];
         if (currentMode === "Sentences" || currentMode === "Jumble") return row[1];
+        if (currentMode === "AddWord") return awReverse ? row[1] : row[0];
         return "";
     }
     function showHint() {
@@ -1706,6 +1924,7 @@
         if (mode === "Vocabulary") { ex = r[3] || ""; }
         else if (mode === "FillBlanks") { de = r[2] || ""; speak = (r[1] || "").replace("___", r[2] || ""); ex = r[1] || ""; }
         else if (mode === "Grammar") { de = r.slice(1).filter(Boolean).join("  ·  "); speak = ""; }
+        else if (mode === "AddWord") { de = r[0] || ""; en = r[1] || ""; ex = r[2] || ""; speak = r[0] || ""; }
         return { en, de, ex, speak, mode, tags: e.data.categories || [] };
     }
 
@@ -2095,7 +2314,8 @@
             FillBlanks: ["English sentence","German with ___","Missing word"],
             Sentences:  ["English","German"],
             Jumble:     ["English","German (correct order)"],
-            Grammar:    ["Column 1","Column 2","Column 3","Column 4"]
+            Grammar:    ["Column 1","Column 2","Column 3","Column 4"],
+            AddWord:    ["German word or sentence","English translation","Example sentence (optional)"]
         })[mode] || ["English","German"];
     }
     function openWordEdit(entry) {
@@ -2104,9 +2324,18 @@
         if (!table) { toast("Open a single table to add words"); return; }
         const cols = editColumns(sectionOf(table), table);
         const row = entry ? (entry.data.rowData || []) : [];
+        const isAddWord = sectionOf(table) === "AddWord";
         document.getElementById("wordedit-title").innerText = entry ? "Edit word" : "Add word";
         document.getElementById("wordedit-fields").innerHTML =
-            cols.map((c,i) => '<input class="custom-input" id="we-' + i + '" placeholder="' + escapeHTML(c) + '" value="' + escapeHTML(row[i] || "") + '">').join("");
+            cols.map((c,i) => {
+                const input = '<input class="custom-input" id="we-' + i + '" placeholder="' + escapeHTML(c) + '" value="' + escapeHTML(row[i] || "") + '">';
+                // Daily real-life finds are usually copied from somewhere else first — offer a paste shortcut on field 1.
+                if (isAddWord && i === 0) {
+                    return '<div style="display:flex; gap:6px; align-items:flex-start;">' + input +
+                        '<button type="button" class="toggle-btn" style="flex:0 0 auto;" onclick="pasteIntoField(\'we-0\')">📋 Paste</button></div>';
+                }
+                return input;
+            }).join("");
         document.getElementById("wordedit-modal").style.display = "flex";
     }
     function closeWordEdit() { document.getElementById("wordedit-modal").style.display = "none"; editEntry = null; }
@@ -2122,7 +2351,30 @@
             listEntries.push({ tableName: table, index: appData[table].length - 1, data: appData[table][appData[table].length - 1] });
         }
         saveData(); closeWordEdit(); renderWordList();
+        if (currentSection && document.getElementById("view-section").style.display !== "none") openSection(currentSection);
         toast(wasEdit ? "Word updated" : "Word added");
+    }
+    // Clipboard shortcut for the Add Word or Sentence popup's first field.
+    function pasteIntoField(id) {
+        if (!navigator.clipboard || !navigator.clipboard.readText) { toast("Clipboard access not available in this browser"); return; }
+        navigator.clipboard.readText().then(text => {
+            if (!text || !text.trim()) { toast("Clipboard is empty"); return; }
+            const el = document.getElementById(id);
+            if (el) { el.value = text.trim(); el.focus(); }
+        }).catch(() => toast("Couldn't read clipboard — check browser permission"));
+    }
+    // Quick entry point for the "Add Word or Sentence" hub: auto-creates its one table on first use.
+    function openAddWordQuick() {
+        const TABLE = "AddWord";
+        if (!appData[TABLE]) {
+            const order = allTables();   // snapshot before adding TABLE, so it isn't listed twice
+            appData[TABLE] = [];
+            _sections[TABLE] = "AddWord";
+            appData._tableOrder = order.concat([TABLE]);
+            saveData();
+        }
+        listSingleTable = TABLE;
+        openWordEdit(null);
     }
     function deleteWord(entry) {
         if (!confirm("Delete this word?")) return;
@@ -2211,9 +2463,10 @@
             if (!name) { toast("Enter a name for the new table"); return; }
             if (appData[name]) { toast("A table with that name already exists"); return; }
             mode = document.getElementById("quickadd-newtable-section").value;
+            const order = allTables();   // snapshot before adding the table, so it isn't listed twice
             appData[name] = [];
             _sections[name] = mode;
-            appData._tableOrder = allTables().concat([name]);
+            appData._tableOrder = order.concat([name]);
             table = name;
         } else {
             mode = sectionOf(table);
@@ -2238,12 +2491,14 @@
         const t = selectedTableForModal;
         const sec = sectionOf(t);
         closeModal();
-        const entries = appData[t].map((w, i) => ({ tableName: t, index: i, data: w }));
+        let entries = appData[t].map((w, i) => ({ tableName: t, index: i, data: w }));
+        if (sec === "AddWord") entries = entries.reverse();   // newest real-life finds first
         openWordList(entries, displayName(t), () => openSection(sec), { singleTable: t });
     }
     function browseSection(mode) {
         const entries = [];
         tablesInSection(mode).forEach(t => appData[t].forEach((w, i) => entries.push({ tableName: t, index: i, data: w })));
+        if (mode === "AddWord") entries.reverse();   // newest real-life finds first
         openWordList(entries, HUBS.find(h => h.mode === mode).title + " — words", () => openSection(mode), { sectionMode: mode });
     }
     function runSearch() {
@@ -2307,6 +2562,494 @@
     function exitPractice() {
         if (currentSection) openSection(currentSection);   // rebuilds the section cleanly with fresh counts
         else goHome();
+    }
+
+    // ==========================================================
+    // 15. AB PRACTICE — PROGRESS (Known/Unknown/Important, on the real entry)
+    // ==========================================================
+    // Streaks live directly on each word entry (entry.ab), synced automatically with the
+    // rest of appData via saveData() — no separate storage needed. Known/Unknown are plain
+    // tags in entry.categories (same mechanism as "Easy"/"Difficult"), and "importance" reuses
+    // the section's existing "Not so important" tag rather than inventing a duplicate one.
+    const AB_STREAK_TO_KNOW = 5;
+    const AB_UNIMPORTANT_TAG = "Not so important";
+
+    function ensureAb(entry) {
+        if (!entry.ab) entry.ab = { activeStreak:0, passiveStreak:0, attempts:0 };
+        return entry.ab;
+    }
+    function abIsUnimportant(entry) { return (entry.categories || []).includes(AB_UNIMPORTANT_TAG); }
+    function abIsKnown(entry) { return (entry.categories || []).includes("Known"); }
+    function abMarkKnown(entry) {
+        const cats = entry.categories || (entry.categories = []);
+        if (!cats.includes("Known")) cats.push("Known");
+        const ui = cats.indexOf("Unknown");
+        if (ui !== -1) cats.splice(ui, 1);
+    }
+    function abEnsureUnknownIfNotKnown(entry) {
+        const cats = entry.categories || (entry.categories = []);
+        if (!cats.includes("Known") && !cats.includes("Unknown")) cats.push("Unknown");
+    }
+    function lbToggleImportant() {
+        if (!lbCurrentCard) return;
+        const entry = lbCurrentCard.entry;
+        const cats = entry.categories || (entry.categories = []);
+        const idx = cats.indexOf(AB_UNIMPORTANT_TAG);
+        if (idx === -1) { cats.push(AB_UNIMPORTANT_TAG); lbPurgeEntryFromQueue(entry); toast("Marked unimportant — won't appear in practice"); }
+        else { cats.splice(idx, 1); toast("Marked important again"); }
+        saveData();
+        lbRefreshImportantBtn();
+    }
+    function lbRefreshImportantBtn() {
+        const btn = document.getElementById("lb-important-btn");
+        if (!lbCurrentCard) return;
+        const off = abIsUnimportant(lbCurrentCard.entry);
+        btn.textContent = off ? "★ Unimportant" : "☆ Important";
+        btn.classList.toggle("off", off);
+    }
+    function lbPurgeEntryFromQueue(entry) {
+        for (let i = lbQueue.length - 1; i > lbIndex; i--) {
+            if (lbQueue[i].entry === entry) lbQueue.splice(i, 1);
+        }
+    }
+
+    // ==========================================================
+    // 16. AB PRACTICE — CARDS & QUEUE (real appData entries, per table)
+    // ==========================================================
+    // Which verb drill types this entry supports, using the real Verbs columns
+    // (en, infinitive, präteritum, perfekt, präsens, notes) — präsens is free-text
+    // "full conjugation", not a single answer, so there's no conjugation drill here.
+    function abVerbDrillTypes(entry) {
+        const row = entry.rowData || [];
+        const types = ["infinitive"];
+        if (row[2]) types.push("praeteritum");
+        if (row[3]) types.push("perfekt");
+        return types;
+    }
+
+    function lbPromptHTML(text) {
+        const s = text || "";
+        const m = s.match(/^(to|the)\s+(.*)$/i);
+        if (!m) return '<span class="lb-lexical">' + escapeHTML(s) + '</span>';
+        return '<span class="lb-marker">' + escapeHTML(m[1]) + '</span> <span class="lb-lexical">' + escapeHTML(m[2]) + '</span>';
+    }
+
+    // Turn one real entry (+ drill type, for Verbs) into a renderable card descriptor.
+    function abCardFor(entry, hubMode, mode, drillType) {
+        const row = entry.rowData || [];
+        if (hubMode === "Verbs" && mode === "active") {
+            if (drillType === "praeteritum") {
+                return { entry, drillType, pos:"verb", direction:"Präteritum bilden", isInfinitive:false,
+                    promptHTML: '<span class="lb-lexical">' + escapeHTML(row[1] || "") + '</span>', answer: row[2] || "" };
+            }
+            if (drillType === "perfekt") {
+                return { entry, drillType, pos:"verb", direction:"Perfekt bilden", isInfinitive:false,
+                    promptHTML: '<span class="lb-lexical">' + escapeHTML(row[1] || "") + '</span>', answer: row[3] || "" };
+            }
+            return { entry, drillType:"infinitive", pos:"verb", direction:"EN → DE", isInfinitive:true,
+                promptHTML: lbPromptHTML(row[0]), answer: row[1] || "" };
+        }
+        const isNoun = /^(der|die|das)\s/.test(row[1] || "");
+        return { entry, drillType:"word", pos: hubMode === "Verbs" ? "verb" : (isNoun ? "noun" : ""), isInfinitive:false,
+            direction: mode === "passive" ? "DE → EN" : "EN → DE",
+            promptHTML: mode === "passive" ? '<span class="lb-lexical">' + articleHTML(row[1] || "") + '</span>' : lbPromptHTML(row[0]),
+            answer: row[1] || "" };
+    }
+
+    // Session queue for one table: everything not marked unimportant, words that aren't
+    // Known yet first (shuffled), Known words filling the rest — no artificial cap, since
+    // the whole point is "practice all of it".
+    function lbBuildQueue(table, mode) {
+        const words = appData[table] || [];
+        const eligible = words.filter(w => !abIsUnimportant(w));
+        const notKnown = eligible.filter(w => !abIsKnown(w));
+        const known = eligible.filter(abIsKnown);
+        const picked = shuffle(notKnown).concat(shuffle(known));
+        return picked.map(entry => {
+            let drillType = null;
+            if (lbHubMode === "Verbs" && mode === "active") {
+                const types = abVerbDrillTypes(entry);
+                drillType = types[ensureAb(entry).attempts % types.length];
+            }
+            return { entry, drillType };
+        });
+    }
+
+    // ==========================================================
+    // 17. AB PRACTICE — RENDERING & INTERACTION
+    // ==========================================================
+    const LB_SPECIAL_CHARS = ["ä","ö","ü","ß","Ä","Ö","Ü"];
+
+    let lbHubMode = "Vocabulary";
+    let lbTable = null;
+    let lbTab = "active";
+    let lbQueue = [];
+    let lbIndex = 0;
+    let lbAnswered = 0;
+    let lbCurrentCard = null;
+    let lbSlots = [];
+    let lbEditableIdx = [];
+    let lbCaretPtr = 0;
+    let lbGraded = null;      // null | "correct" | "warn" | "bad"
+    let lbHintSeq = [];        // ordered list of slot indices available as manual hints
+    let lbHintsUsed = 0;
+    let lbInputBound = false;
+
+    function openAbPractice(mode) {
+        lbHubMode = sessionMode;
+        lbTable = selectedTableForModal;
+        closeModal();
+        lbRenderCharRow();
+        lbBindInputOnce();
+        showScreen("letterbox");
+        switchLbMode(mode);
+    }
+    function closeLetterbox() { openSection(lbHubMode); }
+
+    function switchLbMode(mode) {
+        lbTab = mode;
+        document.querySelectorAll(".lb-tab").forEach(b => b.classList.toggle("on", b.dataset.lbmode === mode));
+        document.getElementById("lb-active-area").style.display = (mode === "active") ? "block" : "none";
+        document.getElementById("lb-passive-area").style.display = (mode === "passive") ? "block" : "none";
+        document.getElementById("lb-footer").style.display = (mode === "active") ? "flex" : "none";
+        document.getElementById("lb-title").innerText = (mode === "active" ? "🔤 Active" : "👁 Passive") + " Vocabulary Practice — " + displayName(lbTable);
+        lbQueue = lbBuildQueue(lbTable, mode);
+        lbIndex = 0; lbAnswered = 0;
+        if (lbQueue.length === 0) {
+            lbRenderProgress();
+            document.getElementById("lb-prompt").innerHTML = "";
+            document.getElementById("lb-pos-chip").innerText = "";
+            document.getElementById("lb-dir-chip").innerText = "";
+            document.getElementById("lb-active-area").style.display = "none";
+            document.getElementById("lb-passive-area").style.display = "none";
+            toast("Nothing left to practice here — every word is marked unimportant");
+            return;
+        }
+        lbLoadCard();
+    }
+
+    function lbRenderProgress() {
+        const total = lbQueue.length;
+        const pct = total ? Math.round((lbAnswered / total) * 100) : 0;
+        document.getElementById("lb-progress-fill").style.width = pct + "%";
+        document.getElementById("lb-progress-text").innerText = lbAnswered + " / " + total;
+    }
+
+    function lbLoadCard() {
+        lbRenderProgress();
+        if (lbIndex >= lbQueue.length) {
+            toast("Session complete — " + lbAnswered + " reviewed. Nice work!");
+            closeLetterbox();
+            return;
+        }
+        const item = lbQueue[lbIndex];
+        if (lbTab === "active") ensureAb(item.entry).attempts++;
+        const card = abCardFor(item.entry, lbHubMode, lbTab, item.drillType);
+        lbCurrentCard = card;
+        lbGraded = null;
+
+        document.getElementById("lb-prompt").innerHTML = card.promptHTML;
+        const posChip = document.getElementById("lb-pos-chip");
+        posChip.style.display = card.pos ? "" : "none";
+        posChip.innerText = card.pos || "";
+        document.getElementById("lb-dir-chip").innerText = card.direction;
+        const fb = document.getElementById("lb-feedback");
+        fb.innerText = ""; fb.className = "lb-feedback";
+        document.getElementById("lb-example").style.display = "none";
+        document.getElementById("lb-live").innerText = "";
+        lbRefreshImportantBtn();
+
+        if (lbTab === "active") lbSetupActiveCard(card); else lbSetupPassiveCard(card);
+    }
+
+    // --- Active (letter-box) mode ---
+    // Deterministic "spread, not clustered" reveal order via recursive bisection: the first
+    // hint lands near the middle of the word, the next two near the quarter-points, and so on.
+    function lbHintOrder(answer, isInfinitive) {
+        let eligible = [];
+        answer.split("").forEach((ch, i) => { if (ch !== " " && i !== 0) eligible.push(i); });
+        if (isInfinitive && /(en|n)$/i.test(answer.trim())) {
+            const lastIdx = answer.length - 1;
+            eligible = eligible.filter(i => i !== lastIdx);
+        }
+        let capitalIdx = -1;
+        const m = answer.match(/^(der|die|das) ([A-ZÄÖÜ])/);
+        if (m) capitalIdx = m[1].length + 1;
+
+        const order = [];
+        let pool = eligible.slice();
+        if (capitalIdx !== -1 && pool.includes(capitalIdx)) {
+            order.push(capitalIdx);
+            pool = pool.filter(i => i !== capitalIdx);
+        }
+        const bisect = (lo, hi) => {
+            if (lo > hi) return;
+            const mid = Math.floor((lo + hi) / 2);
+            order.push(pool[mid]);
+            bisect(lo, mid - 1);
+            bisect(mid + 1, hi);
+        };
+        if (pool.length) bisect(0, pool.length - 1);
+        return order;
+    }
+
+    function lbBuildSlots(answer) {
+        lbSlots = answer.split("").map(ch => ({ char: ch, kind: ch === " " ? "space" : "editable", typed: "" }));
+        lbEditableIdx = [];
+        lbSlots.forEach((s, i) => { if (s.kind === "editable") lbEditableIdx.push(i); });
+    }
+
+    function lbSetupActiveCard(card) {
+        lbHintsUsed = 0;
+        lbHintSeq = lbHintOrder(card.answer, card.isInfinitive);
+        lbBuildSlots(card.answer);
+        lbCaretPtr = 0;
+        lbRenderBoxes();
+        lbUpdateHintNote();
+        const input = document.getElementById("lb-hidden-input");
+        input.value = ""; input.disabled = false; input.focus();
+    }
+
+    function lbUseHint() {
+        if (lbGraded || lbHintsUsed >= lbHintSeq.length) return;
+        const idx = lbHintSeq[lbHintsUsed];
+        lbHintsUsed++;
+        lbSlots[idx].kind = "hint";
+        lbSlots[idx].typed = "";
+        const pos = lbEditableIdx.indexOf(idx);
+        if (pos !== -1) {
+            lbEditableIdx.splice(pos, 1);
+            if (lbCaretPtr > pos) lbCaretPtr--;
+        }
+        lbRenderBoxes();
+        lbUpdateHintNote();
+    }
+    function lbUpdateHintNote() {
+        const note = document.getElementById("lb-hint-note");
+        note.innerText = lbHintsUsed > 0 ? lbHintsUsed + " hint" + (lbHintsUsed > 1 ? "s" : "") + " used — won't count toward Known" : "";
+    }
+
+    function lbRenderBoxes() {
+        const box = document.getElementById("lb-boxes");
+        box.className = "lb-boxes";
+        box.innerHTML = "";
+        const activeSlot = lbCaretPtr < lbEditableIdx.length ? lbEditableIdx[lbCaretPtr] : -1;
+        lbSlots.forEach((s, i) => {
+            const el = document.createElement("div");
+            el.className = "lb-box";
+            if (s.kind === "space") { el.classList.add("space"); box.appendChild(el); return; }
+            if (s.kind === "hint") { el.classList.add("hint"); el.textContent = s.char; box.appendChild(el); return; }
+            if (i === activeSlot) el.classList.add("active");
+            el.textContent = s.typed || "";
+            box.appendChild(el);
+        });
+    }
+
+    function lbBindInputOnce() {
+        if (lbInputBound) return;
+        lbInputBound = true;
+        const input = document.getElementById("lb-hidden-input");
+        input.addEventListener("keydown", lbOnKeydown);
+        input.addEventListener("input", lbOnInput);
+        const wrap = document.getElementById("lb-boxes-wrap");
+        if (wrap) wrap.addEventListener("click", () => input.focus());
+    }
+    function lbOnKeydown(e) {
+        if (lbGraded) { if (e.key === "Enter") { e.preventDefault(); lbEnterOrCheck(); } return; }
+        if (e.key === "Backspace") {
+            e.preventDefault();
+            if (lbCaretPtr > 0) { lbCaretPtr--; lbSlots[lbEditableIdx[lbCaretPtr]].typed = ""; lbRenderBoxes(); }
+            return;
+        }
+        if (e.key === "ArrowLeft") { e.preventDefault(); if (lbCaretPtr > 0) { lbCaretPtr--; lbRenderBoxes(); } return; }
+        if (e.key === "ArrowRight") { e.preventDefault(); if (lbCaretPtr < lbEditableIdx.length) { lbCaretPtr++; lbRenderBoxes(); } return; }
+        if (e.key === "Enter") { e.preventDefault(); lbEnterOrCheck(); return; }
+        if (e.key === " ") { e.preventDefault(); lbAdvanceCaret(); return; }
+        if (/^[1-7]$/.test(e.key)) { e.preventDefault(); lbInsertChar(LB_SPECIAL_CHARS[parseInt(e.key, 10) - 1]); return; }
+    }
+    function lbOnInput(e) {
+        const val = e.target.value;
+        e.target.value = "";
+        if (!val || lbGraded) return;
+        for (const ch of val) { if (ch === " ") lbAdvanceCaret(); else lbInsertChar(ch); }
+    }
+    function lbAdvanceCaret() { if (lbCaretPtr < lbEditableIdx.length) { lbCaretPtr++; lbRenderBoxes(); } }
+    function lbInsertChar(ch) {
+        if (lbGraded || lbCaretPtr >= lbEditableIdx.length) return;
+        lbSlots[lbEditableIdx[lbCaretPtr]].typed = ch;
+        lbCaretPtr++;
+        lbRenderBoxes();
+    }
+    function lbInsertSpecial(ch) { lbInsertChar(ch); document.getElementById("lb-hidden-input").focus(); }
+
+    function lbRenderCharRow() {
+        const row = document.getElementById("lb-char-row");
+        row.innerHTML = "";
+        LB_SPECIAL_CHARS.forEach((ch, i) => {
+            const btn = document.createElement("button");
+            btn.type = "button"; btn.className = "lb-char-btn"; btn.tabIndex = -1;
+            btn.innerHTML = escapeHTML(ch) + '<span class="lb-digit">' + (i + 1) + '</span>';
+            btn.onclick = () => lbInsertSpecial(ch);
+            row.appendChild(btn);
+        });
+    }
+    function toggleLbHelp() {
+        const pop = document.getElementById("lb-help-popover");
+        pop.style.display = pop.style.display === "none" ? "block" : "none";
+    }
+
+    // --- Grading ---
+    function lbNormBasic(s) { return (s || "").trim().replace(/\s+/g, " "); }
+    function lbGrade(typedRaw, targets) {
+        const typed = lbNormBasic(typedRaw);
+        const norm = targets.map(lbNormBasic);
+        if (norm.includes(typed)) return { result:"correct" };
+        const lower = typed.toLowerCase();
+        if (norm.some(t => t.toLowerCase() === lower)) return { result:"warn", reason:"case" };
+        const ssTyped = typed.replace(/ß/g, "ss");
+        const ssTargets = norm.map(t => t.replace(/ß/g, "ss"));
+        if (ssTargets.includes(ssTyped) || ssTargets.some(t => t.toLowerCase() === ssTyped.toLowerCase())) return { result:"warn", reason:"ss" };
+        return { result:"bad" };
+    }
+    function lbGradeMessage(reason, answerHTML) {
+        if (reason === "case") return "Richtig — aber Nomen schreibt man groß: " + answerHTML;
+        if (reason === "ss") return 'Richtig — aber „ß" nicht „ss“: ' + answerHTML;
+        return "";
+    }
+
+    function lbEnterOrCheck() {
+        if (lbTab !== "active") return;
+        if (!lbGraded) lbCheck();
+        else if (lbGraded !== "correct") lbAdvanceCard();
+    }
+
+    function lbCheck() {
+        const card = lbCurrentCard;
+        const entry = card.entry;
+        const typed = lbSlots.map(s => s.kind === "space" ? " " : (s.kind === "hint" ? s.char : (s.typed || ""))).join("");
+        const g = lbGrade(typed, [card.answer]);
+        lbGraded = g.result;
+
+        const fb = document.getElementById("lb-feedback");
+        const boxesEl = document.getElementById("lb-boxes");
+        const answerHTML = articleHTML(card.answer);
+        const ab = ensureAb(entry);
+
+        if (g.result === "correct" || g.result === "warn") {
+            lbPaintAllCorrect();
+            if (lbHintsUsed === 0) {
+                ab.activeStreak = (ab.activeStreak || 0) + 1;
+                if (ab.activeStreak >= AB_STREAK_TO_KNOW) abMarkKnown(entry);
+            }
+            abEnsureUnknownIfNotKnown(entry);
+            if (g.result === "correct") {
+                fb.innerText = "✓ Richtig!"; fb.className = "lb-feedback ok";
+                document.getElementById("lb-live").innerText = "Richtig";
+                document.getElementById("lb-hidden-input").disabled = true;
+                saveData();
+                setTimeout(lbAdvanceCard, 600);
+            } else {
+                fb.innerHTML = "✓ " + lbGradeMessage(g.reason, answerHTML); fb.className = "lb-feedback warn";
+                document.getElementById("lb-live").innerText = "Richtig, mit Hinweis";
+                saveData();
+            }
+        } else {
+            lbPaintDiff();
+            boxesEl.classList.add("lb-shake");
+            fb.innerHTML = "✗ Antwort: " + answerHTML; fb.className = "lb-feedback bad";
+            document.getElementById("lb-live").innerText = "Falsch";
+            const exRow = entry.rowData || [];
+            const example = lbHubMode === "Vocabulary" ? (exRow[3] || "") : "";
+            if (example) {
+                document.getElementById("lb-example").style.display = "block";
+                document.getElementById("lb-example").innerHTML = "„" + escapeHTML(example) + "“";
+            }
+            ab.activeStreak = 0;
+            abEnsureUnknownIfNotKnown(entry);
+            lbRequeueCurrent();
+            saveData();
+        }
+        lbRefreshImportantBtn();
+        lbAnswered++;
+        lbRenderProgress();
+    }
+    function lbPaintAllCorrect() {
+        const boxesEl = document.getElementById("lb-boxes");
+        boxesEl.classList.add("lb-pop");
+        lbSlots.forEach((s, i) => {
+            if (s.kind === "space") return;
+            const el = boxesEl.children[i];
+            el.classList.remove("active", "hint", "wrong");
+            el.classList.add("correct");
+        });
+    }
+    function lbPaintDiff() {
+        const boxesEl = document.getElementById("lb-boxes");
+        lbSlots.forEach((s, i) => {
+            if (s.kind === "space" || s.kind === "hint") return;
+            const el = boxesEl.children[i];
+            el.classList.remove("active");
+            el.classList.add(s.typed && s.typed === s.char ? "correct" : "wrong");
+        });
+    }
+    function lbRequeueCurrent() {
+        const item = lbQueue[lbIndex];
+        lbQueue.splice(Math.min(lbIndex + 5, lbQueue.length), 0, item);
+    }
+    function lbAdvanceCard() {
+        document.getElementById("lb-hidden-input").disabled = false;
+        lbIndex++;
+        lbLoadCard();
+    }
+
+    // --- Passive (multiple choice) mode ---
+    function lbSetupPassiveCard(card) {
+        const options = lbMcqOptions(card.entry);
+        const box = document.getElementById("lb-mcq-options");
+        box.innerHTML = "";
+        options.forEach(opt => {
+            const btn = document.createElement("button");
+            btn.type = "button"; btn.className = "lb-mcq-btn"; btn.textContent = (opt.rowData || [])[0] || "";
+            btn.onclick = () => lbPassiveAnswer(opt, card, btn);
+            box.appendChild(btn);
+        });
+    }
+    function lbMcqOptions(entry) {
+        const pool = [];
+        tablesInSection(lbHubMode).forEach(t => appData[t].forEach(w => { if (w !== entry) pool.push(w); }));
+        const others = shuffle(pool).slice(0, 3);
+        return shuffle([entry].concat(others));
+    }
+    function lbPassiveAnswer(opt, card, btnEl) {
+        if (lbGraded) return;
+        const entry = card.entry;
+        const correct = (opt === entry);
+        lbGraded = correct ? "correct" : "bad";
+        const correctText = (entry.rowData || [])[0] || "";
+        document.querySelectorAll("#lb-mcq-options button").forEach(b => {
+            b.disabled = true;
+            if (b.textContent === correctText) b.classList.add("correct");
+        });
+        if (!correct) btnEl.classList.add("wrong");
+        const fb = document.getElementById("lb-feedback");
+        fb.innerText = correct ? "✓ Richtig!" : "✗ Richtig wäre: " + correctText;
+        fb.className = "lb-feedback " + (correct ? "ok" : "bad");
+        document.getElementById("lb-live").innerText = correct ? "Richtig" : "Falsch";
+
+        const ab = ensureAb(entry);
+        if (correct) {
+            ab.passiveStreak = (ab.passiveStreak || 0) + 1;
+            if (ab.passiveStreak >= AB_STREAK_TO_KNOW) abMarkKnown(entry);
+        } else {
+            ab.passiveStreak = 0;
+            lbRequeueCurrent();
+        }
+        abEnsureUnknownIfNotKnown(entry);
+        saveData();
+
+        lbAnswered++;
+        lbRenderProgress();
+        setTimeout(lbAdvanceCard, 700);
     }
     </script>
 </body>
