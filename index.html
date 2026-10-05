@@ -779,8 +779,12 @@
         messagingSenderId: "412566872637",
         appId: "1:412566872637:web:4c1e754db9ebbab9ff0054"
     };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    // Firebase loads from a CDN; if it couldn't load (offline, nothing cached yet) the app
+    // still runs from the local copy and syncs on a later online start.
+    let db = null;
+    if (typeof firebase !== "undefined") {
+        try { firebase.initializeApp(firebaseConfig); db = firebase.firestore(); } catch (e) { console.error(e); }
+    }
     const COLLECTION = "vocabAppV7";
 
     // ==========================================================
@@ -941,6 +945,7 @@
         loadSettings();
         startReminderEngine();
         document.addEventListener("keydown", onKeyShortcut);
+        window.addEventListener("online", () => { if (hasPendingSync()) pushToCloud(); });
     };
 
     // Keyboard: ← previous · → next/skip · Enter save (only during practice, not while typing)
@@ -1069,8 +1074,10 @@
 
     async function deleteProfileComplete() {
         try {
+            if (!db || !navigator.onLine) throw new Error("offline");
             await db.collection(COLLECTION).doc("data_" + currentProfile).delete();
             localStorage.removeItem("cache_" + currentProfile);
+            setPendingSync(false);
             knownProfiles = knownProfiles.filter(p => p !== currentProfile);
             localStorage.setItem("knownProfiles", JSON.stringify(knownProfiles));
             currentProfile = knownProfiles[0]; localStorage.setItem("vocabProfile", currentProfile);
@@ -1084,8 +1091,25 @@
     async function loadCloudData() {
         const label = document.getElementById("sync-status");
         label.style.display = "block"; label.style.backgroundColor = "var(--amber)"; label.innerText = "Loading " + currentProfile + "…";
+        const cachedRaw = localStorage.getItem("cache_" + currentProfile);
+        // Progress made offline hasn't reached the cloud yet, so the local copy is newer —
+        // use it and upload it, instead of letting the older cloud copy overwrite it.
+        if (cachedRaw && hasPendingSync()) {
+            const data = JSON.parse(cachedRaw);
+            appData = data.tables || {}; _headers = data.headers || {}; _sections = data.sections || {}; _activity = data.activity || {}; _customCats = data.customCats || {};
+            if (db && navigator.onLine) { label.innerText = "Uploading offline progress…"; pushToCloud(); }
+            else label.innerText = "Offline — your progress is saved on this device and will upload later.";
+            setTimeout(() => { label.style.display = "none"; }, 3000);
+            goHome();
+            return;
+        }
         try {
-            const doc = await db.collection(COLLECTION).doc("data_" + currentProfile).get();
+            if (!db || !navigator.onLine) throw new Error("offline");
+            // A weak connection can leave get() hanging; fall back to the local copy instead.
+            const doc = await Promise.race([
+                db.collection(COLLECTION).doc("data_" + currentProfile).get(),
+                new Promise((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000))
+            ]);
             if (doc.exists) {
                 const data = doc.data();
                 appData = data.tables || {}; _headers = data.headers || {}; _sections = data.sections || {}; _activity = data.activity || {}; _customCats = data.customCats || {};
@@ -1097,9 +1121,8 @@
             }
         } catch (e) {
             console.error(e);
-            const cached = localStorage.getItem("cache_" + currentProfile);
-            if (cached) {
-                const data = JSON.parse(cached);
+            if (cachedRaw) {
+                const data = JSON.parse(cachedRaw);
                 appData = data.tables || {}; _headers = data.headers || {}; _sections = data.sections || {}; _activity = data.activity || {}; _customCats = data.customCats || {};
                 label.innerText = "Offline — showing your last saved copy."; label.style.backgroundColor = "var(--amber)";
             } else {
@@ -1116,9 +1139,36 @@
     }
     function saveData() {
         cacheLocal();
-        db.collection(COLLECTION).doc("data_" + currentProfile)
+        pushToCloud();
+    }
+
+    // pendingSync_<profile> holds the timestamp of the newest save not yet confirmed by
+    // Firestore. It survives closing the app, so offline progress is uploaded on the next
+    // online start (or as soon as the 'online' event fires).
+    function hasPendingSync(profile = currentProfile) { return !!localStorage.getItem("pendingSync_" + profile); }
+    function setPendingSync(on, profile = currentProfile) {
+        if (on) localStorage.setItem("pendingSync_" + profile, String(on));
+        else localStorage.removeItem("pendingSync_" + profile);
+    }
+    let offlineToastShown = false;
+    function pushToCloud() {
+        const profile = currentProfile, stamp = Date.now();
+        setPendingSync(stamp, profile);
+        if (!db || !navigator.onLine) {
+            if (!offlineToastShown) { offlineToastShown = true; toast("Offline — progress saved on this device, will upload when back online"); }
+            if (!db) return;
+        }
+        // While offline, Firestore queues this write and resolves once it reaches the server.
+        db.collection(COLLECTION).doc("data_" + profile)
           .set({ tables: appData, headers: _headers, sections: _sections, activity: _activity, customCats: _customCats })
-          .catch(err => { console.error("Cloud save failed", err); toast("Saved offline — will sync when back online"); });
+          .then(() => {
+              // Only clear the flag if no newer save happened while this one was in flight.
+              if (localStorage.getItem("pendingSync_" + profile) === String(stamp)) {
+                  setPendingSync(false, profile);
+                  if (offlineToastShown) { offlineToastShown = false; toast("✅ Offline progress uploaded"); }
+              }
+          })
+          .catch(err => { console.error("Cloud save failed", err); });
     }
 
     // ==========================================================
